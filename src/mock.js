@@ -1,9 +1,6 @@
-import {Observable} from 'rxjs/Observable';
-import Rx from 'rxjs/Rx';
+import { interval, from } from 'rxjs';
+import { mergeMap, map, startWith } from 'rxjs/operators';
 
-// const hashCode = (s) => {
-//     return s.split("").reduce(function(a,b){a=((a<<5)-a)+b.charCodeAt(0);return a&a},0);
-// }
 function hashCode(s) {
     var text = "";
     var possible = "ABCDEFGHJKL";
@@ -30,21 +27,25 @@ const getAllAssets = (n) => {
     result.push(createAsset(i+n, 'Currency'));
   }
   return result;
-}
+};
 
 const assets = getAllAssets(200);
 
-const timeObservable = Rx.Observable.interval(1000);
-export default Observable.create((ob) => {
-	timeObservable.subscribe(() => {
-	  Rx.Observable.from(assets)
-		.map(val => {
-		  const random = Math.random();
-		  val.price = random >= 0.5 ? val.price + random : val.price - random;
-		  val.lastUpdate = Date.now();
-		  return val;
-		})
-		.subscribe(val => ob.next(val));
-	});
-	return () => null; // we don't care about unsubscribe just for a test
-});
+const mock$ = interval(1000)
+  .pipe(
+    startWith(0),
+    mergeMap(
+      () => from(assets)
+        .pipe(
+          map(val => {
+            const random = Math.random();
+            val.price = random >= 0.5 ? val.price + random : val.price - random;
+            val.lastUpdate = Date.now();
+            return val;
+          })
+        )
+    )
+  );
+
+
+export default mock$;
